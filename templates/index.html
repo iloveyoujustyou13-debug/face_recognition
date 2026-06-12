@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Face Recognition Photo Finder</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .section { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #4A90E2; }
+        button { background-color: #4A90E2; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #357ABD; }
+        .gallery { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 20px; }
+        .gallery img { width: 200px; height: 150px; object-fit: cover; border-radius: 5px; border: 2px solid #ddd; }
+    </style>
+</head>
+<body>
+
+    <h1>📸 AI Photo Finder</h1>
+    <p>Group photo upload koro abong nijer selfie diye chobi khunje ber koro!</p>
+
+    <!-- Section 1: Admin/Upload -->
+    <div class="section">
+        <h2>1. Upload Group Photos</h2>
+        <form id="uploadGroupForm">
+            <input type="file" id="groupPhotos" multiple accept="image/*" required>
+            <button type="submit">Upload Photos</button>
+        </form>
+        <p id="uploadStatus"></p>
+    </div>
+
+    <!-- Section 2: Search -->
+    <div class="section">
+        <h2>2. Find Your Photos</h2>
+        <form id="searchSelfieForm">
+            <p>Tomar akta clear selfie upload koro:</p>
+            <input type="file" id="selfie" accept="image/*" required>
+            <button type="submit">Search My Photos</button>
+        </form>
+    </div>
+
+    <!-- Section 3: Results -->
+    <div class="section">
+        <h2>🔍 Your Matched Photos</h2>
+        <div class="gallery" id="resultGallery"></div>
+    </div>
+
+    <script>
+        // Handle Group Upload
+        document.getElementById('uploadGroupForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const files = document.getElementById('groupPhotos').files;
+            const formData = new FormData();
+            
+            for (let i = 0; i < files.length; i++) {
+                formData.append('photos', files[i]);
+            }
+            
+            document.getElementById('uploadStatus').innerText = "Uploading and processing...";
+            
+            const response = await fetch('/upload_group', { method: 'POST', body: formData });
+            const data = await response.json();
+            document.getElementById('uploadStatus').innerText = data.message || data.error;
+        });
+
+        // Handle Selfie Search
+        document.getElementById('searchSelfieForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const selfieFile = document.getElementById('selfie').files[0];
+            const formData = new FormData();
+            formData.append('selfie', selfieFile);
+            
+            const gallery = document.getElementById('resultGallery');
+            gallery.innerHTML = "<p>AI diye khunja hocche... Alpo somoy din.</p>";
+            
+            const response = await fetch('/search_by_selfie', { method: 'POST', body: formData });
+            const data = await response.json();
+            
+            gallery.innerHTML = ""; // Clear loader
+            
+            if (data.matched_photos && data.matched_photos.length > 0) {
+                data.matched_photos.forEach(photoUrl => {
+                    const img = document.createElement('img');
+                    img.src = photoUrl;
+                    gallery.appendChild(img);
+                });
+            } else if (data.error) {
+                gallery.innerHTML = `<p style="color:red;">Error: ${data.error}</p>`;
+            } else {
+                gallery.innerHTML = "<p>Tomar kono chobi khunje paoya jayni.</p>";
+            }
+        });
+    </script>
+</body>
+</html>
